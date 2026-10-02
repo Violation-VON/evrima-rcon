@@ -130,7 +130,7 @@ export class EvrimaRCON {
     if (
       await this.send(
         Opcode.Announce,
-        EvrimaRCON.timestamped(
+        EvrimaRCON.withTimestamp(
           "Announcement Sent: ".length +
             Math.min(EvrimaRCON.ANNOUNCEMENT_LIMIT, message.length),
         ),
@@ -150,7 +150,7 @@ export class EvrimaRCON {
     if (
       await this.send(
         Opcode.WipeCorpses,
-        EvrimaRCON.timestamped("Corpses wiped".length),
+        EvrimaRCON.withTimestamp("Corpses wiped".length),
       ) === ""
     ) {
       throw new Error("Corpse wipe not acknowledged");
@@ -168,7 +168,7 @@ export class EvrimaRCON {
   public async kick(steamId: string, reason: string): Promise<boolean> {
     const reply = await this.send(
       Opcode.Kick,
-      EvrimaRCON.timestamped(
+      EvrimaRCON.withTimestamp(
         "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH + " was kicked".length,
       ),
       [steamId, reason].join(","),
@@ -203,7 +203,7 @@ export class EvrimaRCON {
     }
     const reply = await this.send(
       Opcode.Ban,
-      EvrimaRCON.timestamped(
+      EvrimaRCON.withTimestamp(
         "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH +
           " was kicked and banned".length,
       ),
@@ -308,7 +308,7 @@ export class EvrimaRCON {
     return Uint8Array.from([...header, ...new TextEncoder().encode(text)]);
   }
 
-  private static timestamped(length: number): MessageEnd {
+  private static withTimestamp(length: number): MessageEnd {
     return (text) =>
       text.length >= EvrimaRCON.TIMESTAMP.length + length
         ? text.length
