@@ -91,6 +91,18 @@ export class EvrimaRCON {
         : EvrimaRCON.INCOMPLETE;
   }
 
+  private static parseMutations(
+    slots: string,
+  ): [string | null, string | null, string | null, string | null] {
+    return slots.slice(1, -1).split(",", 4).map((slot) => slot.split("=")[1]!)
+      .map((mutation) => mutation === "None" ? null : mutation) as [
+        string | null,
+        string | null,
+        string | null,
+        string | null,
+      ];
+  }
+
   /**
    * Connects to the server and authenticates.
    *
@@ -269,16 +281,6 @@ export class EvrimaRCON {
 
     if (reply === "") throw new Error("No player data received");
 
-    const mutations = (slots: string) =>
-      slots.slice(1, -1).split(",", 4).map((slot) => slot.split("=")[1]).map((
-        mutation,
-      ) => (mutation === "None" ? null : mutation)) as [
-        string | null,
-        string | null,
-        string | null,
-        string | null,
-      ];
-
     return reply.split("\n").filter((line) => line.startsWith("Name: ")).map(
       (line) => {
         const fields = Object.fromEntries(
@@ -317,10 +319,16 @@ export class EvrimaRCON {
           stamina: Number(fields.Stamina),
           hunger: Number(fields.Hunger),
           thirst: Number(fields.Thirst),
-          mutations: mutations(fields.MutationSlots!),
-          parentMutations: mutations(fields.ParentMutationSlots!),
-          elderMutationsA: mutations(fields.ElderMutationSlotsA!),
-          elderMutationsB: mutations(fields.ElderMutationSlotsB!),
+          mutations: EvrimaRCON.parseMutations(fields.MutationSlots!),
+          parentMutations: EvrimaRCON.parseMutations(
+            fields.ParentMutationSlots!,
+          ),
+          elderMutationsA: EvrimaRCON.parseMutations(
+            fields.ElderMutationSlotsA!,
+          ),
+          elderMutationsB: EvrimaRCON.parseMutations(
+            fields.ElderMutationSlotsB!,
+          ),
           primeElder: fields.PrimeElder === "true",
         } satisfies Character;
       },
