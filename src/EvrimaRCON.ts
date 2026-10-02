@@ -1,0 +1,369 @@
+/*!
+ * evrima-rcon — TypeScript RCON client for The Isle: Evrima.
+ * Copyright (C) 2026  Violation
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+import net from "node:net";
+import { ConnectionOptions } from "./ConnectionOptions.ts";
+import { Player } from "./Player.ts";
+import { Character } from "./Character.ts";
+import { Gender } from "./Gender.ts";
+
+type MessageEnd = (reply: string) => number;
+
+const enum Packet {
+  Auth = 0x01,
+  Command = 0x02,
+}
+
+const enum Opcode {
+  Announce = 0x10,
+  WipeCorpses = 0x13,
+  Ban = 0x20,
+  Kick = 0x30,
+  ListPlayers = 0x40,
+  GetPlayerData = 0x77,
+}
+
+/**
+ * Client for the Evrima RCON protocol.
+ */
+export class EvrimaRCON {
+  /**
+   * Default RCON port.
+   */
+  public static readonly DEFAULT_PORT = 8888;
+
+  /**
+   * Default reply timeout in milliseconds.
+   */
+  public static readonly DEFAULT_TIMEOUT = 500;
+
+  /**
+   * Ban duration in seconds that bans permanently.
+   */
+  public static readonly PERMANENT_BAN = 0;
+
+  private static readonly IGNORE = (): void => undefined;
+  private static readonly LF = "\n";
+  private static readonly INCOMPLETE = -1;
+  private static readonly ANNOUNCEMENT_LIMIT = 511;
+
+  private readonly options: Required<ConnectionOptions>;
+  private socket = new net.Socket();
+  private connected = false;
+  private queue: Promise<void> = Promise.resolve();
+  private listener: (chunk: Uint8Array) => void = EvrimaRCON.IGNORE;
+
+  /**
+   * Creates a client.
+   *
+   * @param options Connection options.
+   */
+  public constructor(options: ConnectionOptions) {
+    this.options = {
+      ...options,
+      port: options.port ?? EvrimaRCON.DEFAULT_PORT,
+      timeout: options.timeout ?? EvrimaRCON.DEFAULT_TIMEOUT,
+    };
+  }
+
+  /**
+   * Connects to the server and authenticates.
+   *
+   * @throws {@link !Error} if authentication fails.
+   */
+  public async connect(): Promise<void> {
+    this.close();
+    const socket = new net.Socket();
+    this.socket = socket;
+    socket.setNoDelay(true);
+    socket.on("data", (chunk: Uint8Array) => this.listener(chunk));
+    socket.on("error", () => socket.destroy());
+    socket.on("close", () => {
+      if (this.socket === socket) {
+        this.connected = false;
+      }
+    });
+    await new Promise<void>((resolve, reject) => {
+      socket.once("connect", resolve);
+      socket.once("error", reject);
+      socket.connect(this.options.port, this.options.host);
+    });
+    const reply = await this.exchange(
+      EvrimaRCON.frame([Packet.Auth], this.options.password),
+      (text) => text.length,
+    );
+    if (reply !== "Password Accepted") {
+      this.close();
+      throw new Error("Authentication failed");
+    }
+    this.connected = true;
+  }
+
+  /**
+   * Closes the connection to the server.
+   */
+  public close(): void {
+    this.connected = false;
+    this.socket.destroy();
+  }
+
+  /**
+   * Sends an announcement message to all online players.
+   *
+   * @param message Message text; max 998 characters.
+   * @throws {@link !Error} if not connected.
+   */
+  public async announce(message: string): Promise<void> {
+    const echo = Math.min(EvrimaRCON.ANNOUNCEMENT_LIMIT, message.length);
+    await this.request(
+      Opcode.Announce,
+      EvrimaRCON.timestamped(String.raw`Announcement Sent: .{${echo}}`),
+      message,
+    );
+  }
+
+  /**
+   * Wipes all corpses.
+   *
+   * @throws {@link !Error} if not connected.
+   */
+  public async wipeCorpses(): Promise<void> {
+    await this.request(
+      Opcode.WipeCorpses,
+      EvrimaRCON.timestamped("Corpses wiped"),
+    );
+  }
+
+  /**
+   * Kicks a player.
+   *
+   * @param steamId SteamID64 of the player.
+   * @param reason Reason; must not contain `,`.
+   * @returns whether the player was online and got kicked.
+   * @throws {@link !Error} if not connected.
+   */
+  public async kick(steamId: string, reason: string): Promise<boolean> {
+    const reply = await this.send(
+      Opcode.Kick,
+      EvrimaRCON.timestamped(String.raw`Player \w{32} was kicked`),
+      [steamId, reason].join(","),
+    );
+    return reply !== "";
+  }
+
+  /**
+   * Bans a player.
+   *
+   * @param name Name of the player.
+   * @param steamId SteamID64 of the player.
+   * @param reason Reason; must not contain `,`.
+   * @param duration Duration in seconds; `0`, `null` and `Infinity` ban permanently.
+   * @returns whether the player was online and got kicked; the ban applies either way.
+   * @throws {@link !RangeError} if the duration is not a non-negative integer, `Infinity` or `null`.
+   * @throws {@link !Error} if not connected.
+   */
+  public async ban(
+    name: string,
+    steamId: string,
+    reason: string,
+    duration: number | null = EvrimaRCON.PERMANENT_BAN,
+  ): Promise<boolean> {
+    const seconds = duration === null || duration === Infinity
+      ? EvrimaRCON.PERMANENT_BAN
+      : duration;
+    if (!Number.isInteger(seconds) || seconds < 0) {
+      throw new RangeError(
+        "Ban duration must be a non-negative integer, Infinity or null",
+      );
+    }
+    const reply = await this.send(
+      Opcode.Ban,
+      EvrimaRCON.timestamped(String.raw`Player \w{32} was kicked and banned`),
+      [name, steamId, reason, seconds].join(","),
+    );
+    return reply !== "";
+  }
+
+  /**
+   * Lists online players.
+   *
+   * @returns Online players.
+   * @throws {@link !Error} if not connected.
+   */
+  public async listPlayers(): Promise<Player[]> {
+    const commas = (line: string): number => line.split(",").length - 1;
+    const reply = await this.request(Opcode.ListPlayers, (text) => {
+      const [, idLine, nameLine] = text.split(EvrimaRCON.LF);
+      return nameLine !== undefined && commas(nameLine) >= commas(idLine)
+        ? text.length
+        : EvrimaRCON.INCOMPLETE;
+    });
+    const [, ids, names] = reply.split(EvrimaRCON.LF);
+    const nameList = names.split(",");
+    return ids
+      .split(",")
+      .slice(0, commas(ids))
+      .map((id, index) => ({ id, name: nameList[index] }));
+  }
+
+  /**
+   * Lists character data of all online players.
+   *
+   * @returns Character data of each online player.
+   * @throws {@link !Error} if not connected.
+   */
+  public async listPlayerData(): Promise<Character[]> {
+    const reply = await this.request(
+      Opcode.GetPlayerData,
+      EvrimaRCON.timestamped("PlayerData\n.*PlayerDataEnd\n"),
+    );
+    const mutations = (slots: string) =>
+      slots
+        .slice(1, -1)
+        .split(",", 4)
+        .map((slot) => slot.split("=")[1])
+        .map((mutation) => (mutation === "None" ? null : mutation)) as [
+          string | null,
+          string | null,
+          string | null,
+          string | null,
+        ];
+    return reply
+      .split(EvrimaRCON.LF)
+      .filter((line) => line.startsWith("Name: "))
+      .map((line) => {
+        const fields = Object.fromEntries(
+          line.split(", ").map((field): [string, string] => {
+            const [key, value] = field.split(": ");
+            return [key, value];
+          }),
+        );
+        const gender = Object.values(Gender).find((value) =>
+          value === fields.Gender
+        );
+        if (gender === undefined) {
+          throw new Error(`Unknown gender: ${fields.Gender}`);
+        }
+        const [x, y, z] = fields.Location.split(" ").map((axis) =>
+          Number(axis.split("=")[1])
+        );
+        return {
+          id: fields.PlayerID,
+          name: fields.Name,
+          gender,
+          location: { x, y, z },
+          speciesClass: fields.Class,
+          growth: Number(fields.Growth),
+          health: Number(fields.Health),
+          stamina: Number(fields.Stamina),
+          hunger: Number(fields.Hunger),
+          thirst: Number(fields.Thirst),
+          mutations: mutations(fields.MutationSlots),
+          parentMutations: mutations(fields.ParentMutationSlots),
+          elderMutationsA: mutations(fields.ElderMutationSlotsA),
+          elderMutationsB: mutations(fields.ElderMutationSlotsB),
+          primeElder: fields.PrimeElder === "true",
+        };
+      });
+  }
+
+  private static frame(header: readonly number[], text: string): Uint8Array {
+    return Uint8Array.from([...header, ...new TextEncoder().encode(text)]);
+  }
+
+  private static timestamped(pattern: string): MessageEnd {
+    const reply = new RegExp(String.raw`^\[[^\]]+\] ${pattern}$`, "s");
+    return (text) => (reply.test(text) ? text.length : EvrimaRCON.INCOMPLETE);
+  }
+
+  private async request(
+    opcode: Opcode,
+    end: MessageEnd,
+    args = "",
+  ): Promise<string> {
+    const reply = await this.send(opcode, end, args);
+    if (reply === "") {
+      throw new Error("No reply received");
+    }
+    return reply;
+  }
+
+  private send(opcode: Opcode, end: MessageEnd, args = ""): Promise<string> {
+    const run = this.queue.then(async () => {
+      if (!this.connected) {
+        throw new Error("Not connected");
+      }
+      return await this.exchange(
+        EvrimaRCON.frame([Packet.Command, opcode], args),
+        end,
+      );
+    });
+    this.queue = run.then(
+      () => undefined,
+      () => this.close(),
+    );
+    return run;
+  }
+
+  private exchange(frame: Uint8Array, end: MessageEnd): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      const socket = this.socket;
+      const decoder = new TextDecoder();
+      let reply = "";
+      let timer: ReturnType<typeof setTimeout>;
+      const finish = (outcome: () => void): void => {
+        clearTimeout(timer);
+        this.listener = EvrimaRCON.IGNORE;
+        socket.off("error", onError);
+        socket.off("close", onClose);
+        outcome();
+      };
+      const onError = (error: Error): void => finish(() => reject(error));
+      const onClose = (): void =>
+        finish(() =>
+          reject(new Error("Connection closed before the reply completed"))
+        );
+      const arm = (): void => {
+        clearTimeout(timer);
+        timer = setTimeout(
+          () =>
+            finish(() => (reply === ""
+              ? resolve(reply)
+              : reject(new Error("Reply stalled before completion")))
+            ),
+          this.options.timeout,
+        );
+      };
+      this.listener = (chunk) => {
+        reply += decoder.decode(chunk, { stream: true });
+        const index = end(reply);
+        if (index === EvrimaRCON.INCOMPLETE) {
+          arm();
+        } else {
+          finish(() => resolve(reply.slice(0, index)));
+        }
+      };
+      socket.on("error", onError);
+      socket.on("close", onClose);
+      arm();
+      socket.write(frame, (error?: Error | null) => {
+        if (error) {
+          onError(error);
+        }
+      });
+    });
+  }
+}
