@@ -56,7 +56,6 @@ export class EvrimaRCON {
    */
   public static readonly PERMANENT_BAN = 0;
 
-  private static readonly LF = "\n";
   private static readonly INCOMPLETE = -1;
   private static readonly ANNOUNCEMENT_LIMIT = 511;
   private static readonly TIMESTAMP = "[YYYY.MM.DD-HH.MM.SS] ";
@@ -222,7 +221,7 @@ export class EvrimaRCON {
     const commas = (line: string): number => line.split(",").length - 1;
 
     const reply = await this.send(Opcode.LIST_PLAYERS, (text) => {
-      const [, idLine, nameLine] = text.split(EvrimaRCON.LF);
+      const [, idLine, nameLine] = text.split("\n");
       return nameLine !== undefined && commas(nameLine) >= commas(idLine)
         ? text.length
         : EvrimaRCON.INCOMPLETE;
@@ -230,7 +229,7 @@ export class EvrimaRCON {
 
     if (reply === "") throw new Error("No player list received.");
 
-    const [, ids, names] = reply.split(EvrimaRCON.LF);
+    const [, ids, names] = reply.split("\n");
     const nameList = names.split(",");
     return ids.split(",").slice(0, commas(ids)).map((id, index) => ({
       id,
@@ -248,7 +247,7 @@ export class EvrimaRCON {
     const reply = await this.send(
       Opcode.GET_PLAYER_DATA,
       (text) =>
-        text.endsWith(`PlayerDataEnd${EvrimaRCON.LF}`)
+        text.endsWith(`PlayerDataEnd${"\n"}`)
           ? text.length
           : EvrimaRCON.INCOMPLETE,
     );
@@ -265,7 +264,7 @@ export class EvrimaRCON {
         string | null,
       ];
 
-    return reply.split(EvrimaRCON.LF).filter((line) =>
+    return reply.split("\n").filter((line) =>
       line.startsWith("Name: ")
     ).map((line) => {
       const fields = Object.fromEntries(
