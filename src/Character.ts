@@ -14,9 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import { Coordinates } from "./Coordinates.ts";
+import type { Coordinates } from "./Coordinates.ts";
 import { Gender } from "./Gender.ts";
-import { Player } from "./Player.ts";
+import type { Player } from "./Player.ts";
 
 /**
  * Player character state.

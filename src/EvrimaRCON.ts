@@ -16,11 +16,11 @@
  */
 import net from "node:net";
 import { on } from "node:events";
-import { ConnectionOptions } from "./ConnectionOptions.ts";
-import { Player } from "./Player.ts";
-import { Character } from "./Character.ts";
+import type { ConnectionOptions } from "./ConnectionOptions.ts";
+import type { Player } from "./Player.ts";
+import type { Character } from "./Character.ts";
 import { Gender } from "./Gender.ts";
-import { Coordinates } from "./main.ts";
+import type { Coordinates } from "./main.ts";
 
 type MessageEnd = (reply: string) => number;
 
@@ -234,6 +234,9 @@ export class EvrimaRCON {
 
     const reply = await this.send(Opcode.LIST_PLAYERS, (text) => {
       const [, idLine, nameLine] = text.split("\n");
+      if (idLine === undefined || nameLine === undefined) {
+        return EvrimaRCON.INCOMPLETE;
+      }
       return nameLine !== undefined && commas(nameLine) >= commas(idLine)
         ? text.length
         : EvrimaRCON.INCOMPLETE;
@@ -242,11 +245,11 @@ export class EvrimaRCON {
     if (reply === "") throw new Error("No player list received.");
 
     const [, ids, names] = reply.split("\n");
-    const nameList = names.split(",");
-    return ids.split(",").slice(0, commas(ids)).map((id, index) => ({
+    const nameList = names!.split(",");
+    return ids!.split(",").slice(0, commas(ids!)).map((id, index) => ({
       id,
-      name: nameList[index],
-    }));
+      name: nameList[index]!,
+    } satisfies Player));
   }
 
   /**
@@ -281,6 +284,9 @@ export class EvrimaRCON {
         const fields = Object.fromEntries(
           line.split(", ").map((field): [string, string] => {
             const [key, value] = field.split(": ");
+            if (key === undefined || value === undefined) {
+              throw new Error(`Received malformed player data field: ${field}`);
+            }
             return [key, value];
           }),
         );
@@ -294,27 +300,27 @@ export class EvrimaRCON {
         }
 
         const { x, y, z } = Object.fromEntries(
-          fields.Location.split(" ").map((axis) => {
+          fields.Location!.split(" ").map((axis) => {
             const [key, value] = axis.split("=");
-            return [key.toLowerCase(), Number(value)];
+            return [key!.toLowerCase(), Number(value)];
           }),
         );
 
         return {
-          id: fields.PlayerID,
-          name: fields.Name,
+          id: fields.PlayerID!,
+          name: fields.Name!,
           gender,
-          location: { x, y, z } satisfies Coordinates,
-          speciesClass: fields.Class,
+          location: { x: x!, y: y!, z: z! } satisfies Coordinates,
+          speciesClass: fields.Class!,
           growth: Number(fields.Growth),
           health: Number(fields.Health),
           stamina: Number(fields.Stamina),
           hunger: Number(fields.Hunger),
           thirst: Number(fields.Thirst),
-          mutations: mutations(fields.MutationSlots),
-          parentMutations: mutations(fields.ParentMutationSlots),
-          elderMutationsA: mutations(fields.ElderMutationSlotsA),
-          elderMutationsB: mutations(fields.ElderMutationSlotsB),
+          mutations: mutations(fields.MutationSlots!),
+          parentMutations: mutations(fields.ParentMutationSlots!),
+          elderMutationsA: mutations(fields.ElderMutationSlotsA!),
+          elderMutationsB: mutations(fields.ElderMutationSlotsB!),
           primeElder: fields.PrimeElder === "true",
         } satisfies Character;
       },
