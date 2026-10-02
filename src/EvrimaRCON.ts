@@ -20,6 +20,7 @@ import { ConnectionOptions } from "./ConnectionOptions.ts";
 import { Player } from "./Player.ts";
 import { Character } from "./Character.ts";
 import { Gender } from "./Gender.ts";
+import { Coordinates } from "./main.ts";
 
 type MessageEnd = (reply: string) => number;
 
@@ -292,15 +293,18 @@ export class EvrimaRCON {
           throw new Error(`Unknown gender: ${fields.Gender}`);
         }
 
-        const [x, y, z] = fields.Location.split(" ").map((axis) =>
-          Number(axis.split("=")[1])
+        const { x, y, z } = Object.fromEntries(
+          fields.Location.split(" ").map((axis) => {
+            const [key, value] = axis.split("=");
+            return [key.toLowerCase(), Number(value)];
+          }),
         );
 
         return {
           id: fields.PlayerID,
           name: fields.Name,
           gender,
-          location: { x, y, z },
+          location: { x, y, z } satisfies Coordinates,
           speciesClass: fields.Class,
           growth: Number(fields.Growth),
           health: Number(fields.Health),
