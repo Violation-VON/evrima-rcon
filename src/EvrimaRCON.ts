@@ -166,14 +166,13 @@ export class EvrimaRCON {
    * @throws {@link !Error} if not connected.
    */
   public async kick(steamId: string, reason: string): Promise<boolean> {
-    const reply = await this.send(
+    return await this.send(
       Opcode.Kick,
       EvrimaRCON.withTimestamp(
         "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH + " was kicked".length,
       ),
       [steamId, reason].join(","),
-    );
-    return reply !== "";
+    ) !== "";
   }
 
   /**
@@ -201,15 +200,14 @@ export class EvrimaRCON {
         "Ban duration must be a non-negative integer, Infinity or null",
       );
     }
-    const reply = await this.send(
+    return await this.send(
       Opcode.Ban,
       EvrimaRCON.withTimestamp(
         "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH +
           " was kicked and banned".length,
       ),
       [name, steamId, reason, seconds].join(","),
-    );
-    return reply !== "";
+    ) !== "";
   }
 
   /**
