@@ -24,17 +24,17 @@ import { Gender } from "./Gender.ts";
 type MessageEnd = (reply: string) => number;
 
 const enum Packet {
-  Auth = 0x01,
-  Command = 0x02,
+  AUTH = 0x01,
+  COMMAND = 0x02,
 }
 
 const enum Opcode {
-  Announce = 0x10,
-  WipeCorpses = 0x13,
-  Ban = 0x20,
-  Kick = 0x30,
-  ListPlayers = 0x40,
-  GetPlayerData = 0x77,
+  ANNOUNCE = 0x10,
+  WIPE_CORPSES = 0x13,
+  BAN = 0x20,
+  KICK = 0x30,
+  LIST_PLAYERS = 0x40,
+  GET_PLAYER_DATA = 0x77,
 }
 
 /**
@@ -104,7 +104,7 @@ export class EvrimaRCON {
     });
 
     const reply = await this.exchange(
-      EvrimaRCON.frame([Packet.Auth], this.options.password),
+      EvrimaRCON.frame([Packet.AUTH], this.options.password),
       (text) => text.length,
     );
 
@@ -133,7 +133,7 @@ export class EvrimaRCON {
   public async announce(message: string): Promise<void> {
     if (
       await this.send(
-        Opcode.Announce,
+        Opcode.ANNOUNCE,
         EvrimaRCON.withTimestamp(
           "Announcement Sent: ".length +
             Math.min(EvrimaRCON.ANNOUNCEMENT_LIMIT, message.length),
@@ -151,7 +151,7 @@ export class EvrimaRCON {
   public async wipeCorpses(): Promise<void> {
     if (
       await this.send(
-        Opcode.WipeCorpses,
+        Opcode.WIPE_CORPSES,
         EvrimaRCON.withTimestamp("Corpses wiped".length),
       ) === ""
     ) throw new Error("Corpse wipe not acknowledged");
@@ -167,7 +167,7 @@ export class EvrimaRCON {
    */
   public async kick(steamId: string, reason: string): Promise<boolean> {
     return await this.send(
-      Opcode.Kick,
+      Opcode.KICK,
       EvrimaRCON.withTimestamp(
         "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH + " was kicked".length,
       ),
@@ -203,7 +203,7 @@ export class EvrimaRCON {
     }
 
     return await this.send(
-      Opcode.Ban,
+      Opcode.BAN,
       EvrimaRCON.withTimestamp(
         "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH +
           " was kicked and banned".length,
@@ -221,7 +221,7 @@ export class EvrimaRCON {
   public async listPlayers(): Promise<Player[]> {
     const commas = (line: string): number => line.split(",").length - 1;
 
-    const reply = await this.send(Opcode.ListPlayers, (text) => {
+    const reply = await this.send(Opcode.LIST_PLAYERS, (text) => {
       const [, idLine, nameLine] = text.split(EvrimaRCON.LF);
       return nameLine !== undefined && commas(nameLine) >= commas(idLine)
         ? text.length
@@ -246,7 +246,7 @@ export class EvrimaRCON {
    */
   public async listPlayerData(): Promise<Character[]> {
     const reply = await this.send(
-      Opcode.GetPlayerData,
+      Opcode.GET_PLAYER_DATA,
       (text) =>
         text.endsWith(`PlayerDataEnd${EvrimaRCON.LF}`)
           ? text.length
@@ -322,7 +322,7 @@ export class EvrimaRCON {
     const run = this.queue.then(async () => {
       if (!this.connected) throw new Error("Not connected");
       return await this.exchange(
-        EvrimaRCON.frame([Packet.Command, opcode], args),
+        EvrimaRCON.frame([Packet.COMMAND, opcode], args),
         end,
       );
     });
