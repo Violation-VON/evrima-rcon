@@ -59,6 +59,8 @@ export class EvrimaRCON {
   private static readonly LF = "\n";
   private static readonly INCOMPLETE = -1;
   private static readonly ANNOUNCEMENT_LIMIT = 511;
+  private static readonly TIMESTAMP = "[YYYY.MM.DD-HH.MM.SS] ";
+  private static readonly PLAYER_ID_LENGTH = 32;
 
   private readonly options: Required<ConnectionOptions>;
   private socket = new net.Socket();
@@ -127,10 +129,12 @@ export class EvrimaRCON {
    * @throws {@link !Error} if not connected.
    */
   public async announce(message: string): Promise<void> {
-    const echo = Math.min(EvrimaRCON.ANNOUNCEMENT_LIMIT, message.length);
     await this.request(
       Opcode.Announce,
-      EvrimaRCON.timestamped(String.raw`Announcement Sent: .{${echo}}`),
+      EvrimaRCON.timestamped(
+        "Announcement Sent: ".length +
+          Math.min(EvrimaRCON.ANNOUNCEMENT_LIMIT, message.length),
+      ),
       message,
     );
   }
@@ -143,7 +147,7 @@ export class EvrimaRCON {
   public async wipeCorpses(): Promise<void> {
     await this.request(
       Opcode.WipeCorpses,
-      EvrimaRCON.timestamped("Corpses wiped"),
+      EvrimaRCON.timestamped("Corpses wiped".length),
     );
   }
 
@@ -158,7 +162,9 @@ export class EvrimaRCON {
   public async kick(steamId: string, reason: string): Promise<boolean> {
     const reply = await this.send(
       Opcode.Kick,
-      EvrimaRCON.timestamped(String.raw`Player \w{32} was kicked`),
+      EvrimaRCON.timestamped(
+        "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH + " was kicked".length,
+      ),
       [steamId, reason].join(","),
     );
     return reply !== "";
@@ -191,7 +197,10 @@ export class EvrimaRCON {
     }
     const reply = await this.send(
       Opcode.Ban,
-      EvrimaRCON.timestamped(String.raw`Player \w{32} was kicked and banned`),
+      EvrimaRCON.timestamped(
+        "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH +
+          " was kicked and banned".length,
+      ),
       [name, steamId, reason, seconds].join(","),
     );
     return reply !== "";
@@ -228,7 +237,10 @@ export class EvrimaRCON {
   public async listPlayerData(): Promise<Character[]> {
     const reply = await this.request(
       Opcode.GetPlayerData,
-      EvrimaRCON.timestamped("PlayerData\n.*PlayerDataEnd\n"),
+      (text) =>
+        text.endsWith(`PlayerDataEnd${EvrimaRCON.LF}`)
+          ? text.length
+          : EvrimaRCON.INCOMPLETE,
     );
     const mutations = (slots: string) =>
       slots
@@ -284,9 +296,11 @@ export class EvrimaRCON {
     return Uint8Array.from([...header, ...new TextEncoder().encode(text)]);
   }
 
-  private static timestamped(pattern: string): MessageEnd {
-    const reply = new RegExp(String.raw`^\[[^\]]+\] ${pattern}$`, "s");
-    return (text) => (reply.test(text) ? text.length : EvrimaRCON.INCOMPLETE);
+  private static timestamped(length: number): MessageEnd {
+    return (text) =>
+      text.length >= EvrimaRCON.TIMESTAMP.length + length
+        ? text.length
+        : EvrimaRCON.INCOMPLETE;
   }
 
   private async request(
