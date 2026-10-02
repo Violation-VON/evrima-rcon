@@ -1,0 +1,34 @@
+{
+  "name": "evrima-rcon",
+  "version": "0.0.0-dev",
+  "description": "TypeScript RCON client for The Isle: Evrima.",
+  "keywords": [
+    "evrima",
+    "rcon",
+    "the",
+    "isle"
+  ],
+  "homepage": "https://github.com/Violation-VON/evrima-rcon#readme",
+  "bugs": {
+    "url": "https://github.com/Violation-VON/evrima-rcon/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Violation-VON/evrima-rcon.git"
+  },
+  "license": "GPL-3.0-only",
+  "author": "Violation",
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "dist/**.js",
+    "dist/**.d.ts"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "typescript": "^6.0.3"
+  }
+}
