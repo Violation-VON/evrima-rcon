@@ -302,7 +302,7 @@ export class EvrimaRCON {
         elderMutationsA: mutations(fields.ElderMutationSlotsA),
         elderMutationsB: mutations(fields.ElderMutationSlotsB),
         primeElder: fields.PrimeElder === "true",
-      };
+      } satisfies Character;
     });
   }
 
