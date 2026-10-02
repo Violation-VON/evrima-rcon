@@ -127,14 +127,18 @@ export class EvrimaRCON {
    * @throws {@link !Error} if not connected.
    */
   public async announce(message: string): Promise<void> {
-    await this.request(
-      Opcode.Announce,
-      EvrimaRCON.timestamped(
-        "Announcement Sent: ".length +
-          Math.min(EvrimaRCON.ANNOUNCEMENT_LIMIT, message.length),
-      ),
-      message,
-    );
+    if (
+      await this.send(
+        Opcode.Announce,
+        EvrimaRCON.timestamped(
+          "Announcement Sent: ".length +
+            Math.min(EvrimaRCON.ANNOUNCEMENT_LIMIT, message.length),
+        ),
+        message,
+      ) === ""
+    ) {
+      throw new Error("Announcement not acknowledged");
+    }
   }
 
   /**
@@ -143,10 +147,14 @@ export class EvrimaRCON {
    * @throws {@link !Error} if not connected.
    */
   public async wipeCorpses(): Promise<void> {
-    await this.request(
-      Opcode.WipeCorpses,
-      EvrimaRCON.timestamped("Corpses wiped".length),
-    );
+    if (
+      await this.send(
+        Opcode.WipeCorpses,
+        EvrimaRCON.timestamped("Corpses wiped".length),
+      ) === ""
+    ) {
+      throw new Error("Corpse wipe not acknowledged");
+    }
   }
 
   /**
@@ -212,12 +220,15 @@ export class EvrimaRCON {
    */
   public async listPlayers(): Promise<Player[]> {
     const commas = (line: string): number => line.split(",").length - 1;
-    const reply = await this.request(Opcode.ListPlayers, (text) => {
+    const reply = await this.send(Opcode.ListPlayers, (text) => {
       const [, idLine, nameLine] = text.split(EvrimaRCON.LF);
       return nameLine !== undefined && commas(nameLine) >= commas(idLine)
         ? text.length
         : EvrimaRCON.INCOMPLETE;
     });
+    if (reply === "") {
+      throw new Error("No player list received.");
+    }
     const [, ids, names] = reply.split(EvrimaRCON.LF);
     const nameList = names.split(",");
     return ids
@@ -233,13 +244,16 @@ export class EvrimaRCON {
    * @throws {@link !Error} if not connected.
    */
   public async listPlayerData(): Promise<Character[]> {
-    const reply = await this.request(
+    const reply = await this.send(
       Opcode.GetPlayerData,
       (text) =>
         text.endsWith(`PlayerDataEnd${EvrimaRCON.LF}`)
           ? text.length
           : EvrimaRCON.INCOMPLETE,
     );
+    if (reply === "") {
+      throw new Error("No player data received");
+    }
     const mutations = (slots: string) =>
       slots
         .slice(1, -1)
@@ -299,18 +313,6 @@ export class EvrimaRCON {
       text.length >= EvrimaRCON.TIMESTAMP.length + length
         ? text.length
         : EvrimaRCON.INCOMPLETE;
-  }
-
-  private async request(
-    opcode: Opcode,
-    end: MessageEnd,
-    args = "",
-  ): Promise<string> {
-    const reply = await this.send(opcode, end, args);
-    if (reply === "") {
-      throw new Error("No reply received");
-    }
-    return reply;
   }
 
   private send(opcode: Opcode, end: MessageEnd, args = ""): Promise<string> {
