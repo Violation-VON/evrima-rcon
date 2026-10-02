@@ -264,46 +264,46 @@ export class EvrimaRCON {
         string | null,
       ];
 
-    return reply.split("\n").filter((line) =>
-      line.startsWith("Name: ")
-    ).map((line) => {
-      const fields = Object.fromEntries(
-        line.split(", ").map((field): [string, string] => {
-          const [key, value] = field.split(": ");
-          return [key, value];
-        }),
-      );
+    return reply.split("\n").filter((line) => line.startsWith("Name: ")).map(
+      (line) => {
+        const fields = Object.fromEntries(
+          line.split(", ").map((field): [string, string] => {
+            const [key, value] = field.split(": ");
+            return [key, value];
+          }),
+        );
 
-      const gender = Object.values(Gender).find((value) =>
-        value === fields.Gender
-      );
+        const gender = Object.values(Gender).find((value) =>
+          value === fields.Gender
+        );
 
-      if (gender === undefined) {
-        throw new Error(`Unknown gender: ${fields.Gender}`);
-      }
+        if (gender === undefined) {
+          throw new Error(`Unknown gender: ${fields.Gender}`);
+        }
 
-      const [x, y, z] = fields.Location.split(" ").map((axis) =>
-        Number(axis.split("=")[1])
-      );
+        const [x, y, z] = fields.Location.split(" ").map((axis) =>
+          Number(axis.split("=")[1])
+        );
 
-      return {
-        id: fields.PlayerID,
-        name: fields.Name,
-        gender,
-        location: { x, y, z },
-        speciesClass: fields.Class,
-        growth: Number(fields.Growth),
-        health: Number(fields.Health),
-        stamina: Number(fields.Stamina),
-        hunger: Number(fields.Hunger),
-        thirst: Number(fields.Thirst),
-        mutations: mutations(fields.MutationSlots),
-        parentMutations: mutations(fields.ParentMutationSlots),
-        elderMutationsA: mutations(fields.ElderMutationSlotsA),
-        elderMutationsB: mutations(fields.ElderMutationSlotsB),
-        primeElder: fields.PrimeElder === "true",
-      } satisfies Character;
-    });
+        return {
+          id: fields.PlayerID,
+          name: fields.Name,
+          gender,
+          location: { x, y, z },
+          speciesClass: fields.Class,
+          growth: Number(fields.Growth),
+          health: Number(fields.Health),
+          stamina: Number(fields.Stamina),
+          hunger: Number(fields.Hunger),
+          thirst: Number(fields.Thirst),
+          mutations: mutations(fields.MutationSlots),
+          parentMutations: mutations(fields.ParentMutationSlots),
+          elderMutationsA: mutations(fields.ElderMutationSlotsA),
+          elderMutationsB: mutations(fields.ElderMutationSlotsB),
+          primeElder: fields.PrimeElder === "true",
+        } satisfies Character;
+      },
+    );
   }
 
   private static frame(header: readonly number[], text: string): Uint8Array {
