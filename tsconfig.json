@@ -9,6 +9,17 @@
 
     "types": ["node"],
 
+    "incremental": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "stripInternal": true,
+    "noEmitOnError": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+
+    "strict": true,
     "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
@@ -18,9 +29,9 @@
     "noFallthroughCasesInSwitch": true,
     "strictNullChecks": true,
     "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "allowImportingTsExtensions": true,
-    "rewriteRelativeImportExtensions": true
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   }
 }
