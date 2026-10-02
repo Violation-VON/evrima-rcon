@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import net from "node:net";
+import { on } from "node:events";
 import { ConnectionOptions } from "./ConnectionOptions.ts";
 import { Player } from "./Player.ts";
 import { Character } from "./Character.ts";
@@ -55,7 +56,6 @@ export class EvrimaRCON {
    */
   public static readonly PERMANENT_BAN = 0;
 
-  private static readonly IGNORE = (): void => undefined;
   private static readonly LF = "\n";
   private static readonly INCOMPLETE = -1;
   private static readonly ANNOUNCEMENT_LIMIT = 511;
@@ -66,7 +66,6 @@ export class EvrimaRCON {
   private socket = new net.Socket();
   private connected = false;
   private queue: Promise<void> = Promise.resolve();
-  private listener: (chunk: Uint8Array) => void = EvrimaRCON.IGNORE;
 
   /**
    * Creates a client.
@@ -91,7 +90,6 @@ export class EvrimaRCON {
     const socket = new net.Socket();
     this.socket = socket;
     socket.setNoDelay(true);
-    socket.on("data", (chunk: Uint8Array) => this.listener(chunk));
     socket.on("error", () => socket.destroy());
     socket.on("close", () => {
       if (this.socket === socket) {
@@ -332,52 +330,28 @@ export class EvrimaRCON {
     return run;
   }
 
-  private exchange(frame: Uint8Array, end: MessageEnd): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      const socket = this.socket;
-      const decoder = new TextDecoder();
-      let reply = "";
-      let timer: ReturnType<typeof setTimeout>;
-      const finish = (outcome: () => void): void => {
-        clearTimeout(timer);
-        this.listener = EvrimaRCON.IGNORE;
-        socket.off("error", onError);
-        socket.off("close", onClose);
-        outcome();
-      };
-      const onError = (error: Error): void => finish(() => reject(error));
-      const onClose = (): void =>
-        finish(() =>
-          reject(new Error("Connection closed before the reply completed"))
-        );
-      const arm = (): void => {
-        clearTimeout(timer);
-        timer = setTimeout(
-          () =>
-            finish(() => (reply === ""
-              ? resolve(reply)
-              : reject(new Error("Reply stalled before completion")))
-            ),
-          this.options.timeout,
-        );
-      };
-      this.listener = (chunk) => {
+  private async exchange(frame: Uint8Array, end: MessageEnd): Promise<string> {
+    const signal = AbortSignal.timeout(this.options.timeout);
+    const chunks = on(this.socket, "data", { signal, close: ["close"] });
+    const decoder = new TextDecoder();
+    let reply = "";
+    this.socket.write(frame);
+    try {
+      for await (const [chunk] of chunks) {
         reply += decoder.decode(chunk, { stream: true });
         const index = end(reply);
-        if (index === EvrimaRCON.INCOMPLETE) {
-          arm();
-        } else {
-          finish(() => resolve(reply.slice(0, index)));
+        if (index !== EvrimaRCON.INCOMPLETE) {
+          return reply.slice(0, index);
         }
-      };
-      socket.on("error", onError);
-      socket.on("close", onClose);
-      arm();
-      socket.write(frame, (error?: Error | null) => {
-        if (error) {
-          onError(error);
-        }
-      });
-    });
+      }
+    } catch (error) {
+      if (!signal.aborted) {
+        throw error;
+      }
+    }
+    if (reply !== "" || !signal.aborted) {
+      throw new Error("Reply did not complete");
+    }
+    return "";
   }
 }
