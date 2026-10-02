@@ -79,6 +79,17 @@ export class EvrimaRCON {
     };
   }
 
+  private static frame(header: readonly number[], text: string): Uint8Array {
+    return Uint8Array.from([...header, ...new TextEncoder().encode(text)]);
+  }
+
+  private static withTimestamp(length: number): MessageEnd {
+    return (text) =>
+      text.length >= EvrimaRCON.TIMESTAMP.length + length
+        ? text.length
+        : EvrimaRCON.INCOMPLETE;
+  }
+
   /**
    * Connects to the server and authenticates.
    *
@@ -304,17 +315,6 @@ export class EvrimaRCON {
         } satisfies Character;
       },
     );
-  }
-
-  private static frame(header: readonly number[], text: string): Uint8Array {
-    return Uint8Array.from([...header, ...new TextEncoder().encode(text)]);
-  }
-
-  private static withTimestamp(length: number): MessageEnd {
-    return (text) =>
-      text.length >= EvrimaRCON.TIMESTAMP.length + length
-        ? text.length
-        : EvrimaRCON.INCOMPLETE;
   }
 
   private send(opcode: Opcode, end: MessageEnd, args = ""): Promise<string> {
