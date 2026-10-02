@@ -92,9 +92,7 @@ export class EvrimaRCON {
     socket.setNoDelay(true);
     socket.on("error", () => socket.destroy());
     socket.on("close", () => {
-      if (this.socket === socket) {
-        this.connected = false;
-      }
+      if (this.socket === socket) this.connected = false;
     });
     await new Promise<void>((resolve, reject) => {
       socket.once("connect", resolve);
@@ -136,9 +134,7 @@ export class EvrimaRCON {
         ),
         message,
       ) === ""
-    ) {
-      throw new Error("Announcement not acknowledged");
-    }
+    ) throw new Error("Announcement not acknowledged");
   }
 
   /**
@@ -152,9 +148,7 @@ export class EvrimaRCON {
         Opcode.WipeCorpses,
         EvrimaRCON.withTimestamp("Corpses wiped".length),
       ) === ""
-    ) {
-      throw new Error("Corpse wipe not acknowledged");
-    }
+    ) throw new Error("Corpse wipe not acknowledged");
   }
 
   /**
@@ -216,6 +210,7 @@ export class EvrimaRCON {
    * @returns Online players.
    * @throws {@link !Error} if not connected.
    */
+
   public async listPlayers(): Promise<Player[]> {
     const commas = (line: string): number => line.split(",").length - 1;
     const reply = await this.send(Opcode.ListPlayers, (text) => {
@@ -224,15 +219,13 @@ export class EvrimaRCON {
         ? text.length
         : EvrimaRCON.INCOMPLETE;
     });
-    if (reply === "") {
-      throw new Error("No player list received.");
-    }
+    if (reply === "") throw new Error("No player list received.");
     const [, ids, names] = reply.split(EvrimaRCON.LF);
     const nameList = names.split(",");
-    return ids
-      .split(",")
-      .slice(0, commas(ids))
-      .map((id, index) => ({ id, name: nameList[index] }));
+    return ids.split(",").slice(0, commas(ids)).map((id, index) => ({
+      id,
+      name: nameList[index],
+    }));
   }
 
   /**
@@ -249,57 +242,52 @@ export class EvrimaRCON {
           ? text.length
           : EvrimaRCON.INCOMPLETE,
     );
-    if (reply === "") {
-      throw new Error("No player data received");
-    }
+    if (reply === "") throw new Error("No player data received");
     const mutations = (slots: string) =>
-      slots
-        .slice(1, -1)
-        .split(",", 4)
-        .map((slot) => slot.split("=")[1])
-        .map((mutation) => (mutation === "None" ? null : mutation)) as [
-          string | null,
-          string | null,
-          string | null,
-          string | null,
-        ];
-    return reply
-      .split(EvrimaRCON.LF)
-      .filter((line) => line.startsWith("Name: "))
-      .map((line) => {
-        const fields = Object.fromEntries(
-          line.split(", ").map((field): [string, string] => {
-            const [key, value] = field.split(": ");
-            return [key, value];
-          }),
-        );
-        const gender = Object.values(Gender).find((value) =>
-          value === fields.Gender
-        );
-        if (gender === undefined) {
-          throw new Error(`Unknown gender: ${fields.Gender}`);
-        }
-        const [x, y, z] = fields.Location.split(" ").map((axis) =>
-          Number(axis.split("=")[1])
-        );
-        return {
-          id: fields.PlayerID,
-          name: fields.Name,
-          gender,
-          location: { x, y, z },
-          speciesClass: fields.Class,
-          growth: Number(fields.Growth),
-          health: Number(fields.Health),
-          stamina: Number(fields.Stamina),
-          hunger: Number(fields.Hunger),
-          thirst: Number(fields.Thirst),
-          mutations: mutations(fields.MutationSlots),
-          parentMutations: mutations(fields.ParentMutationSlots),
-          elderMutationsA: mutations(fields.ElderMutationSlotsA),
-          elderMutationsB: mutations(fields.ElderMutationSlotsB),
-          primeElder: fields.PrimeElder === "true",
-        };
-      });
+      slots.slice(1, -1).split(",", 4).map((slot) => slot.split("=")[1]).map((
+        mutation,
+      ) => (mutation === "None" ? null : mutation)) as [
+        string | null,
+        string | null,
+        string | null,
+        string | null,
+      ];
+    return reply.split(EvrimaRCON.LF).filter((line) =>
+      line.startsWith("Name: ")
+    ).map((line) => {
+      const fields = Object.fromEntries(
+        line.split(", ").map((field): [string, string] => {
+          const [key, value] = field.split(": ");
+          return [key, value];
+        }),
+      );
+      const gender = Object.values(Gender).find((value) =>
+        value === fields.Gender
+      );
+      if (gender === undefined) {
+        throw new Error(`Unknown gender: ${fields.Gender}`);
+      }
+      const [x, y, z] = fields.Location.split(" ").map((axis) =>
+        Number(axis.split("=")[1])
+      );
+      return {
+        id: fields.PlayerID,
+        name: fields.Name,
+        gender,
+        location: { x, y, z },
+        speciesClass: fields.Class,
+        growth: Number(fields.Growth),
+        health: Number(fields.Health),
+        stamina: Number(fields.Stamina),
+        hunger: Number(fields.Hunger),
+        thirst: Number(fields.Thirst),
+        mutations: mutations(fields.MutationSlots),
+        parentMutations: mutations(fields.ParentMutationSlots),
+        elderMutationsA: mutations(fields.ElderMutationSlotsA),
+        elderMutationsB: mutations(fields.ElderMutationSlotsB),
+        primeElder: fields.PrimeElder === "true",
+      };
+    });
   }
 
   private static frame(header: readonly number[], text: string): Uint8Array {
@@ -315,18 +303,13 @@ export class EvrimaRCON {
 
   private send(opcode: Opcode, end: MessageEnd, args = ""): Promise<string> {
     const run = this.queue.then(async () => {
-      if (!this.connected) {
-        throw new Error("Not connected");
-      }
+      if (!this.connected) throw new Error("Not connected");
       return await this.exchange(
         EvrimaRCON.frame([Packet.Command, opcode], args),
         end,
       );
     });
-    this.queue = run.then(
-      () => undefined,
-      () => this.close(),
-    );
+    this.queue = run.then(() => undefined, () => this.close());
     return run;
   }
 
@@ -340,14 +323,10 @@ export class EvrimaRCON {
       for await (const [chunk] of chunks) {
         reply += decoder.decode(chunk, { stream: true });
         const index = end(reply);
-        if (index !== EvrimaRCON.INCOMPLETE) {
-          return reply.slice(0, index);
-        }
+        if (index !== EvrimaRCON.INCOMPLETE) return reply.slice(0, index);
       }
     } catch (error) {
-      if (!signal.aborted) {
-        throw error;
-      }
+      if (!signal.aborted) throw error;
     }
     if (reply !== "" || !signal.aborted) {
       throw new Error("Reply did not complete");
