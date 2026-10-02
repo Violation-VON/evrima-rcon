@@ -87,26 +87,32 @@ export class EvrimaRCON {
    */
   public async connect(): Promise<void> {
     this.close();
+
     const socket = new net.Socket();
     this.socket = socket;
+
     socket.setNoDelay(true);
     socket.on("error", () => socket.destroy());
     socket.on("close", () => {
       if (this.socket === socket) this.connected = false;
     });
+
     await new Promise<void>((resolve, reject) => {
       socket.once("connect", resolve);
       socket.once("error", reject);
       socket.connect(this.options.port, this.options.host);
     });
+
     const reply = await this.exchange(
       EvrimaRCON.frame([Packet.Auth], this.options.password),
       (text) => text.length,
     );
+
     if (reply !== "Password Accepted") {
       this.close();
       throw new Error("Authentication failed");
     }
+
     this.connected = true;
   }
 
@@ -189,11 +195,13 @@ export class EvrimaRCON {
     const seconds = duration === null || duration === Infinity
       ? EvrimaRCON.PERMANENT_BAN
       : duration;
+
     if (!Number.isInteger(seconds) || seconds < 0) {
       throw new RangeError(
         "Ban duration must be a non-negative integer, Infinity or null",
       );
     }
+
     return await this.send(
       Opcode.Ban,
       EvrimaRCON.withTimestamp(
@@ -210,16 +218,18 @@ export class EvrimaRCON {
    * @returns Online players.
    * @throws {@link !Error} if not connected.
    */
-
   public async listPlayers(): Promise<Player[]> {
     const commas = (line: string): number => line.split(",").length - 1;
+
     const reply = await this.send(Opcode.ListPlayers, (text) => {
       const [, idLine, nameLine] = text.split(EvrimaRCON.LF);
       return nameLine !== undefined && commas(nameLine) >= commas(idLine)
         ? text.length
         : EvrimaRCON.INCOMPLETE;
     });
+
     if (reply === "") throw new Error("No player list received.");
+
     const [, ids, names] = reply.split(EvrimaRCON.LF);
     const nameList = names.split(",");
     return ids.split(",").slice(0, commas(ids)).map((id, index) => ({
@@ -242,7 +252,9 @@ export class EvrimaRCON {
           ? text.length
           : EvrimaRCON.INCOMPLETE,
     );
+
     if (reply === "") throw new Error("No player data received");
+
     const mutations = (slots: string) =>
       slots.slice(1, -1).split(",", 4).map((slot) => slot.split("=")[1]).map((
         mutation,
@@ -252,6 +264,7 @@ export class EvrimaRCON {
         string | null,
         string | null,
       ];
+
     return reply.split(EvrimaRCON.LF).filter((line) =>
       line.startsWith("Name: ")
     ).map((line) => {
@@ -261,15 +274,19 @@ export class EvrimaRCON {
           return [key, value];
         }),
       );
+
       const gender = Object.values(Gender).find((value) =>
         value === fields.Gender
       );
+
       if (gender === undefined) {
         throw new Error(`Unknown gender: ${fields.Gender}`);
       }
+
       const [x, y, z] = fields.Location.split(" ").map((axis) =>
         Number(axis.split("=")[1])
       );
+
       return {
         id: fields.PlayerID,
         name: fields.Name,
@@ -309,7 +326,9 @@ export class EvrimaRCON {
         end,
       );
     });
+
     this.queue = run.then(() => undefined, () => this.close());
+
     return run;
   }
 
@@ -317,8 +336,10 @@ export class EvrimaRCON {
     const signal = AbortSignal.timeout(this.options.timeout);
     const chunks = on(this.socket, "data", { signal, close: ["close"] });
     const decoder = new TextDecoder();
+
     let reply = "";
     this.socket.write(frame);
+
     try {
       for await (const [chunk] of chunks) {
         reply += decoder.decode(chunk, { stream: true });
@@ -328,9 +349,11 @@ export class EvrimaRCON {
     } catch (error) {
       if (!signal.aborted) throw error;
     }
+
     if (reply !== "" || !signal.aborted) {
       throw new Error("Reply did not complete");
     }
+
     return "";
   }
 }
