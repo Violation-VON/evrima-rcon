@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  node-build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+          cache: npm
+
+      - name: Install latest NPM
+        run: npm i -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Pack
+        run: npm pack
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: package
+          path: evrima-rcon-0.0.0-dev.tgz
+
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install Deno
+        uses: denoland/setup-deno@v2
+
+      - name: Install dependencies
+        run: deno install
+
+      - name: Check types
+        run: deno check
+
+      - name: Check formatting
+        run: deno fmt --check
+
+  publish:
+    name: Publish
+    needs:
+      - node-build
+      - check
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+          cache: npm
+
+      - name: Install latest NPM
+        run: npm i -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set version from release tag
+        run: npm version ${{ github.event.release.tag_name }} --git-tag-version=false
+
+      - name: Generate jsr.json from package.json
+        run: |
+          jq '{
+            name: ("@von/" + .name),
+            version: .version,
+            license: .license,
+            exports: "./src/index.ts"
+          }' package.json > jsr.json
+
+      - name: Publish to JSR
+        run: npx jsr publish --allow-dirty
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: package
+          path: ./package
+
+      - name: Extract build package
+        working-directory: ./package
+        run: tar -xzf evrima-rcon-0.0.0-dev.tgz
+
+      - name: Copy package.json to build package
+        run: cp package.json package/package
+
+      - name: Publish release to NPM
+        if: "!github.event.release.prerelease"
+        working-directory: ./package/package
+        run: npm publish --provenance --access public
+
+      - name: Publish release candidate to NPM
+        if: github.event.release.prerelease
+        working-directory: ./package/package
+        run: npm publish --provenance --access public --tag rc
