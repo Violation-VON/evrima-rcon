@@ -50,37 +50,37 @@ rcon.close();
 
 ## Commands
 
-| Command                           | Note                                                                                | Support |
-| --------------------------------- | ----------------------------------------------------------------------------------- | :-----: |
-| Announce                          | [announce(message: string): void](#)                                                |   ✅    |
-| Wipe Corpses                      | [wipeCorpses(): void](#)                                                            |   ✅    |
-| Kick                              | [kick(steamId: string, reason: string): boolean](#)                                 |   ✅    |
-| Ban                               | [ban(name: string, steamId: string, reason: string, duration?: number): boolean](#) |   ✅    |
-| List Players                      | [listPlayers(): Player\[\]](#)                                                      |   ✅    |
-| List Player Data                  | [listPlayerData(): Character\[\]](#)                                                |   ✅    |
-| Direct Message                    | (broken in-game)                                                                    |   ❌    |
-| Server Details                    |                                                                                     | Planned |
-| Get Playables                     |                                                                                     | Planned |
-| Update Playables                  |                                                                                     | Planned |
-| Add Playable                      |                                                                                     | Planned |
-| Remove Playable                   |                                                                                     | Planned |
-| Toggle Migrations                 |                                                                                     | Planned |
-| Toggle Growth Multiplier          |                                                                                     | Planned |
-| Set Growth Multiplier             |                                                                                     | Planned |
-| Toggle Net Update Distance Checks |                                                                                     | Planned |
-| Save                              |                                                                                     | Planned |
-| Pause                             |                                                                                     | Planned |
-| Toggle Whitellist                 |                                                                                     | Planned |
-| Add to Whitellist                 |                                                                                     | Planned |
-| Remove from Whitellist            |                                                                                     | Planned |
-| Toggle Global Chat                |                                                                                     | Planned |
-| Toggle Humans                     |                                                                                     | Planned |
-| Toggle AI                         |                                                                                     | Planned |
-| Disable AI Species                |                                                                                     | Planned |
-| Adjust AI Density                 |                                                                                     | Planned |
-| Get Queue Status                  |                                                                                     | Planned |
-| Toggle AI Learning                |                                                                                     | Planned |
-| Command                           |                                                                                     | Unknown |
+| Command                           | Note                                                                                                                                                      | Support |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----: |
+| Announce                          | [announce(message: string): void](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#announce)                                           |   ✅    |
+| Wipe Corpses                      | [wipeCorpses(): void](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#wipecorpses)                                                    |   ✅    |
+| Kick                              | [kick(steamId: string, reason: string): boolean](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#kick)                                |   ✅    |
+| Ban                               | [ban(name: string, steamId: string, reason: string, duration?: number): boolean](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#ban) |   ✅    |
+| List Players                      | [listPlayers(): Player\[\]](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayers)                                              |   ✅    |
+| List Player Data                  | [listPlayerData(): Character\[\]](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayerdata)                                     |   ✅    |
+| Direct Message                    | (broken in-game)                                                                                                                                          |   ❌    |
+| Server Details                    |                                                                                                                                                           | Planned |
+| Get Playables                     |                                                                                                                                                           | Planned |
+| Update Playables                  |                                                                                                                                                           | Planned |
+| Add Playable                      |                                                                                                                                                           | Planned |
+| Remove Playable                   |                                                                                                                                                           | Planned |
+| Toggle Migrations                 |                                                                                                                                                           | Planned |
+| Toggle Growth Multiplier          |                                                                                                                                                           | Planned |
+| Set Growth Multiplier             |                                                                                                                                                           | Planned |
+| Toggle Net Update Distance Checks |                                                                                                                                                           | Planned |
+| Save                              |                                                                                                                                                           | Planned |
+| Pause                             |                                                                                                                                                           | Planned |
+| Toggle Whitellist                 |                                                                                                                                                           | Planned |
+| Add to Whitellist                 |                                                                                                                                                           | Planned |
+| Remove from Whitellist            |                                                                                                                                                           | Planned |
+| Toggle Global Chat                |                                                                                                                                                           | Planned |
+| Toggle Humans                     |                                                                                                                                                           | Planned |
+| Toggle AI                         |                                                                                                                                                           | Planned |
+| Disable AI Species                |                                                                                                                                                           | Planned |
+| Adjust AI Density                 |                                                                                                                                                           | Planned |
+| Get Queue Status                  |                                                                                                                                                           | Planned |
+| Toggle AI Learning                |                                                                                                                                                           | Planned |
+| Command                           |                                                                                                                                                           | Unknown |
 
 ## Licence
 
