@@ -20,7 +20,7 @@ import type { ConnectionOptions } from "./ConnectionOptions.ts";
 import type { Player } from "./Player.ts";
 import type { Character } from "./Character.ts";
 import { Gender } from "./Gender.ts";
-import type { Coordinates } from "./main.ts";
+import type { Coordinates } from "./Coordinates.ts";
 
 type MessageEnd = (reply: string) => number;
 
