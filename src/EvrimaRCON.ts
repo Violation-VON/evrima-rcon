@@ -81,7 +81,11 @@ export class EvrimaRCON {
   }
 
   private static frame(header: readonly number[], text: string): Uint8Array {
-    return Uint8Array.from([...header, ...new TextEncoder().encode(text), 0x00]);
+    return Uint8Array.from([
+      ...header,
+      ...new TextEncoder().encode(text),
+      0x00,
+    ]);
   }
 
   private static withTimestamp(length: number): MessageEnd {
