@@ -50,6 +50,8 @@ rcon.close();
 
 ## Commands
 
+The commands were tested against a v0.21.784 server.
+
 | Command                           | Note                                                                                                                                                        | Support |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----: |
 | Announce                          | [`announce(message: string): void`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#announce)                                           |   ✅    |
