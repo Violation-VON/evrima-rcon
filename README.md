@@ -4,7 +4,7 @@
 [![GitHub](https://img.shields.io/badge/GitHub-181717?logo=github)](https://github.com/Violation-VON/evrima-rcon)
 [![NPM](https://img.shields.io/npm/v/evrima-rcon.svg)](https://www.npmjs.com/package/evrima-rcon)
 [![Downloads](https://img.shields.io/npm/d18m/evrima-rcon.svg)](https://www.npmjs.com/package/evrima-rcon)
-[![Licence](https://img.shields.io/github/license/Violation-VON/evrima-rcon)](https://github.com/Violation-VON/evrima-rcon/blob/master/COPYING)
+[![Licence](https://img.shields.io/github/license/Violation-VON/evrima-rcon)](https://github.com/Violation-VON/evrima-rcon/blob/main/COPYING)
 [![JSR Score](https://jsr.io/badges/@von/evrima-rcon/score)](https://jsr.io/@von/evrima-rcon)
 [![CI](https://github.com/Violation-VON/evrima-rcon/actions/workflows/ci.yaml/badge.svg)](https://github.com/Violation-VON/evrima-rcon/actions/workflows/ci.yaml)
 
