@@ -36,6 +36,7 @@ const enum Opcode {
   GET_SERVER_DETAILS = 0x12,
   WIPE_CORPSES = 0x13,
   GET_PLAYABLES = 0x14,
+  UPDATE_PLAYABLES = 0x15,
   ADD_PLAYABLE = 0x1a,
   REMOVE_PLAYABLE = 0x1b,
   BAN = 0x20,
@@ -266,6 +267,34 @@ export class EvrimaRCON {
 
     const [, names] = reply.split("\n");
     return new Set(names!.split(",").slice(0, -1) as Species[]);
+  }
+
+  /**
+   * Sets the playable species.
+   *
+   * @param species Species set to set as playable.
+   * @returns Playable species after updating.
+   * @throws {@link !Error} if not connected.
+   */
+  public async setPlayables(
+    species: ReadonlySet<Species>,
+  ): Promise<Set<Species>> {
+    const prefix = "Playables updated: ";
+
+    const reply = await this.send(
+      Opcode.UPDATE_PLAYABLES,
+      undefined,
+      [...species].join(","),
+    );
+
+    if (!reply.startsWith(prefix, EvrimaRCON.TIMESTAMP.length)) {
+      throw new Error("Malformed playables update response");
+    }
+
+    return new Set(
+      reply.slice(EvrimaRCON.TIMESTAMP.length + prefix.length)
+        .split(",").filter(Boolean) as Species[],
+    );
   }
 
   /**

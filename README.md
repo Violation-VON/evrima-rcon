@@ -63,7 +63,7 @@ The commands were tested against a v0.21.784 server.
 | Server Details                    | [`getServerDetails(): ServerDetails`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getserverdetails)                                 |   ✅    |
 | Direct Message                    | (broken in-game)                                                                                                                                            |   ❌    |
 | Get Playables                     | [`getPlayables(): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getplayables)                                          |   ✅    |
-| Update Playables                  |                                                                                                                                                             | Planned |
+| Update Playables                  | [`setPlayables(species: ReadonlySet<Species>): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#setplayables)             |   ✅    |
 | Add Playables                     | [`addPlayables(species: ReadonlySet<Species>): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#addplayables)             |   ✅    |
 | Remove Playables                  | [`removePlayables(species: ReadonlySet<Species>): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#removeplayables)       |   ✅    |
 | Toggle Migrations                 |                                                                                                                                                             | Planned |
