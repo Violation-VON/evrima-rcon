@@ -18,7 +18,7 @@
 /**
  * Playable species.
  */
-export enum Species {
+export const enum Species {
   Allosaurus = "Allosaurus",
   Austroraptor = "Austroraptor",
   Beipiaosaurus = "Beipiaosaurus",
