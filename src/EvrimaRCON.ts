@@ -255,7 +255,7 @@ export class EvrimaRCON {
    * @returns Playable species.
    * @throws {@link !Error} if not connected.
    */
-  public async getPlayables(): Promise<Species[]> {
+  public async getPlayables(): Promise<Set<Species>> {
     const reply = await this.send(
       Opcode.GET_PLAYABLES,
       (text) =>
@@ -265,39 +265,85 @@ export class EvrimaRCON {
     if (reply === "") throw new Error("No playables received");
 
     const [, names] = reply.split("\n");
-    return names!.split(",").slice(0, -1) as Species[];
+    return new Set(names!.split(",").slice(0, -1) as Species[]);
+  }
+
+  /**
+   * Adds a playable species.
+   *
+   * @param species Species to add.
+   * @returns Playable species after adding.
+   * @throws {@link !Error} if not connected.
+   */
+  public async addPlayable(species: Species): Promise<Set<Species>> {
+    return await this.addPlayables(new Set([species]));
   }
 
   /**
    * Adds playable species.
    *
    * @param species Species to add.
+   * @returns Playable species after adding.
    * @throws {@link !Error} if not connected.
    */
-  public async addPlayables(species: Species[]): Promise<void> {
-    if (
-      await this.send(
-        Opcode.ADD_PLAYABLE,
-        EvrimaRCON.withTimestamp("Playable(s) added. Now: ".length),
-        species.join(","),
-      ) === ""
-    ) throw new Error("Playables addition not acknowledged");
+  public async addPlayables(
+    species: ReadonlySet<Species>,
+  ): Promise<Set<Species>> {
+    const prefix = "Playable(s) added. Now: ";
+
+    const reply = await this.send(
+      Opcode.ADD_PLAYABLE,
+      undefined,
+      [...species].join(","),
+    );
+
+    if (!reply.startsWith(prefix, EvrimaRCON.TIMESTAMP.length)) {
+      throw new Error("Malformed playables addition response");
+    }
+
+    return new Set(
+      reply.slice(EvrimaRCON.TIMESTAMP.length + prefix.length)
+        .split(",").filter(Boolean) as Species[],
+    );
+  }
+
+  /**
+   * Removes a playable species.
+   *
+   * @param species Species to remove.
+   * @returns Playable species after removing.
+   * @throws {@link !Error} if not connected.
+   */
+  public async removePlayable(species: Species): Promise<Set<Species>> {
+    return await this.removePlayables(new Set([species]));
   }
 
   /**
    * Removes playable species.
    *
    * @param species Species to remove.
+   * @returns Playable species after removing.
    * @throws {@link !Error} if not connected.
    */
-  public async removePlayables(species: Species[]): Promise<void> {
-    if (
-      await this.send(
-        Opcode.REMOVE_PLAYABLE,
-        EvrimaRCON.withTimestamp("Playable(s) removed. Now: ".length),
-        species.join(","),
-      ) === ""
-    ) throw new Error("Playables removal not acknowledged");
+  public async removePlayables(
+    species: ReadonlySet<Species>,
+  ): Promise<Set<Species>> {
+    const prefix = "Playable(s) removed. Now: ";
+
+    const reply = await this.send(
+      Opcode.REMOVE_PLAYABLE,
+      undefined,
+      [...species].join(","),
+    );
+
+    if (!reply.startsWith(prefix, EvrimaRCON.TIMESTAMP.length)) {
+      throw new Error("Malformed playables removal response");
+    }
+
+    return new Set(
+      reply.slice(EvrimaRCON.TIMESTAMP.length + prefix.length)
+        .split(",").filter(Boolean) as Species[],
+    );
   }
 
   /**
@@ -469,7 +515,7 @@ export class EvrimaRCON {
     );
   }
 
-  private send(opcode: Opcode, end: MessageEnd, args = ""): Promise<string> {
+  private send(opcode: Opcode, end: MessageEnd | undefined, args = ""): Promise<string> {
     const run = this.queue.then(async () => {
       if (!this.connected) throw new Error("Not connected");
       return await this.exchange(
@@ -483,7 +529,7 @@ export class EvrimaRCON {
     return run;
   }
 
-  private async exchange(frame: Uint8Array, end: MessageEnd): Promise<string> {
+  private async exchange(frame: Uint8Array, end: MessageEnd | undefined): Promise<string> {
     const signal = AbortSignal.timeout(this.options.timeout);
     const chunks = on(this.socket, "data", { signal, close: ["close"] });
     const decoder = new TextDecoder();
@@ -494,6 +540,8 @@ export class EvrimaRCON {
     try {
       for await (const [chunk] of chunks) {
         reply += decoder.decode(chunk, { stream: true });
+        if (end === undefined) return reply;
+
         const index = end(reply);
         if (index !== EvrimaRCON.INCOMPLETE) return reply.slice(0, index);
       }
