@@ -62,7 +62,7 @@ The commands were tested against a v0.21.784 server.
 | List Player Data                  | [`listPlayerData(): Character[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayerdata)                                       |   ✅    |
 | Server Details                    | [`getServerDetails(): ServerDetails`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getserverdetails)                                 |   ✅    |
 | Direct Message                    | (broken in-game)                                                                                                                                            |   ❌    |
-| Get Playables                     |                                                                                                                                                             | Planned |
+| Get Playables                     | [`getPlayables(): Species[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getplayables)                                             |   ✅    |
 | Update Playables                  |                                                                                                                                                             | Planned |
 | Add Playable                      |                                                                                                                                                             | Planned |
 | Remove Playable                   |                                                                                                                                                             | Planned |

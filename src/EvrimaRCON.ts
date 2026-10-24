@@ -22,6 +22,7 @@ import type { Coordinates } from "./Coordinates.ts";
 import { Gender } from "./Gender.ts";
 import type { Player } from "./Player.ts";
 import type { ServerDetails } from "./ServerDetails.ts";
+import type { Species } from "./Species.ts";
 
 type MessageEnd = (reply: string) => number;
 
@@ -34,6 +35,7 @@ const enum Opcode {
   ANNOUNCE = 0x10,
   GET_SERVER_DETAILS = 0x12,
   WIPE_CORPSES = 0x13,
+  GET_PLAYABLES = 0x14,
   BAN = 0x20,
   KICK = 0x30,
   LIST_PLAYERS = 0x40,
@@ -243,6 +245,25 @@ export class EvrimaRCON {
         type === Boolean ? groups[property] === "true" : type(groups[property]),
       ]),
     ) as { [P in keyof typeof schema]: ReturnType<(typeof schema)[P][1]> };
+  }
+
+  /**
+   * Gets the playable species.
+   *
+   * @returns Playable species.
+   * @throws {@link !Error} if not connected.
+   */
+  public async getPlayables(): Promise<Species[]> {
+    const reply = await this.send(
+      Opcode.GET_PLAYABLES,
+      (text) =>
+        /(?:,|Playables\n)$/.test(text) ? text.length : EvrimaRCON.INCOMPLETE,
+    );
+
+    if (reply === "") throw new Error("No playables received");
+
+    const [, names] = reply.split("\n");
+    return names!.split(",").slice(0, -1) as Species[];
   }
 
   /**
