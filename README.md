@@ -64,8 +64,8 @@ The commands were tested against a v0.21.784 server.
 | Direct Message                    | (broken in-game)                                                                                                                                            |   ❌    |
 | Get Playables                     | [`getPlayables(): Species[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getplayables)                                             |   ✅    |
 | Update Playables                  |                                                                                                                                                             | Planned |
-| Add Playable                      |                                                                                                                                                             | Planned |
-| Remove Playable                   |                                                                                                                                                             | Planned |
+| Add Playable                      | [`addPlayables(species: Species[]): void`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#addplayables)                                |   ✅    |
+| Remove Playable                   | [`removePlayables(species: Species[]): void`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#removeplayables)                          |   ✅    |
 | Toggle Migrations                 |                                                                                                                                                             | Planned |
 | Toggle Growth Multiplier          |                                                                                                                                                             | Planned |
 | Set Growth Multiplier             |                                                                                                                                                             | Planned |

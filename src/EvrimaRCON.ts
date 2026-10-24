@@ -36,6 +36,8 @@ const enum Opcode {
   GET_SERVER_DETAILS = 0x12,
   WIPE_CORPSES = 0x13,
   GET_PLAYABLES = 0x14,
+  ADD_PLAYABLE = 0x1a,
+  REMOVE_PLAYABLE = 0x1b,
   BAN = 0x20,
   KICK = 0x30,
   LIST_PLAYERS = 0x40,
@@ -264,6 +266,38 @@ export class EvrimaRCON {
 
     const [, names] = reply.split("\n");
     return names!.split(",").slice(0, -1) as Species[];
+  }
+
+  /**
+   * Adds playable species.
+   *
+   * @param species Species to add.
+   * @throws {@link !Error} if not connected.
+   */
+  public async addPlayables(species: Species[]): Promise<void> {
+    if (
+      await this.send(
+        Opcode.ADD_PLAYABLE,
+        EvrimaRCON.withTimestamp("Playable(s) added. Now: ".length),
+        species.join(","),
+      ) === ""
+    ) throw new Error("Playables addition not acknowledged");
+  }
+
+  /**
+   * Removes playable species.
+   *
+   * @param species Species to remove.
+   * @throws {@link !Error} if not connected.
+   */
+  public async removePlayables(species: Species[]): Promise<void> {
+    if (
+      await this.send(
+        Opcode.REMOVE_PLAYABLE,
+        EvrimaRCON.withTimestamp("Playable(s) removed. Now: ".length),
+        species.join(","),
+      ) === ""
+    ) throw new Error("Playables removal not acknowledged");
   }
 
   /**
