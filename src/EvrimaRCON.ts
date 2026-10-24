@@ -212,13 +212,23 @@ export class EvrimaRCON {
     const groups = new RegExp(
       fields.map(([property, [key, type]], index) => {
         const next = fields[index + 1];
-        const pattern = type === Number
-          ? "\\d+"
-          : type === Boolean
-          ? "true|false"
-          : next === undefined
-          ? ".*"
-          : `.*?(?=, ${next[1][0]}: )`;
+
+        let pattern: string;
+
+        switch (type) {
+          case Number:
+            pattern = "\\d+";
+            break;
+          case Boolean:
+            pattern = "true|false";
+            break;
+          case String:
+            pattern = next === undefined ? ".*" : `.*?(?=, ${next[1][0]}: )`;
+            break;
+          default:
+            throw new Error(`Unknown constructor ${type.name}`);
+        }
+
         return `${key}: (?<${property}>${pattern})`;
       }).join(", .*?"),
     ).exec(reply)?.groups;
