@@ -62,10 +62,10 @@ The commands were tested against a v0.21.784 server.
 | List Player Data                  | [`listPlayerData(): Character[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayerdata)                                       |   ✅    |
 | Server Details                    | [`getServerDetails(): ServerDetails`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getserverdetails)                                 |   ✅    |
 | Direct Message                    | (broken in-game)                                                                                                                                            |   ❌    |
-| Get Playables                     | [`getPlayables(): Species[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getplayables)                                             |   ✅    |
+| Get Playables                     | [`getPlayables(): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getplayables)                                          |   ✅    |
 | Update Playables                  |                                                                                                                                                             | Planned |
-| Add Playable                      | [`addPlayables(species: Species[]): void`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#addplayables)                                |   ✅    |
-| Remove Playable                   | [`removePlayables(species: Species[]): void`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#removeplayables)                          |   ✅    |
+| Add Playables                     | [`addPlayables(species: ReadonlySet<Species>): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#addplayables)             |   ✅    |
+| Remove Playables                  | [`removePlayables(species: ReadonlySet<Species>): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#removeplayables)       |   ✅    |
 | Toggle Migrations                 |                                                                                                                                                             | Planned |
 | Toggle Growth Multiplier          |                                                                                                                                                             | Planned |
 | Set Growth Multiplier             |                                                                                                                                                             | Planned |
