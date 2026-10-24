@@ -544,7 +544,11 @@ export class EvrimaRCON {
     );
   }
 
-  private send(opcode: Opcode, end: MessageEnd | undefined, args = ""): Promise<string> {
+  private send(
+    opcode: Opcode,
+    end: MessageEnd | undefined,
+    args = "",
+  ): Promise<string> {
     const run = this.queue.then(async () => {
       if (!this.connected) throw new Error("Not connected");
       return await this.exchange(
@@ -558,7 +562,10 @@ export class EvrimaRCON {
     return run;
   }
 
-  private async exchange(frame: Uint8Array, end: MessageEnd | undefined): Promise<string> {
+  private async exchange(
+    frame: Uint8Array,
+    end: MessageEnd | undefined,
+  ): Promise<string> {
     const signal = AbortSignal.timeout(this.options.timeout);
     const chunks = on(this.socket, "data", { signal, close: ["close"] });
     const decoder = new TextDecoder();
