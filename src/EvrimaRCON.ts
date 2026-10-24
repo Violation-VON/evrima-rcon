@@ -14,13 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-import net from "node:net";
 import { on } from "node:events";
-import type { ConnectionOptions } from "./ConnectionOptions.ts";
-import type { Player } from "./Player.ts";
+import net from "node:net";
 import type { Character } from "./Character.ts";
-import { Gender } from "./Gender.ts";
+import type { ConnectionOptions } from "./ConnectionOptions.ts";
 import type { Coordinates } from "./Coordinates.ts";
+import { Gender } from "./Gender.ts";
+import type { Player } from "./Player.ts";
+import type { ServerDetails } from "./ServerDetails.ts";
 
 type MessageEnd = (reply: string) => number;
 
@@ -31,6 +32,7 @@ const enum Packet {
 
 const enum Opcode {
   ANNOUNCE = 0x10,
+  GET_SERVER_DETAILS = 0x12,
   WIPE_CORPSES = 0x13,
   BAN = 0x20,
   KICK = 0x30,
@@ -168,6 +170,69 @@ export class EvrimaRCON {
         message,
       ) === ""
     ) throw new Error("Announcement not acknowledged");
+  }
+
+  /**
+   * Gets the server details.
+   *
+   * @returns Server details.
+   * @throws {@link !Error} if not connected.
+   */
+  public async getServerDetails(): Promise<ServerDetails> {
+    const reply = await this.send(
+      Opcode.GET_SERVER_DETAILS,
+      (text) => text.endsWith("\n") ? text.length : EvrimaRCON.INCOMPLETE,
+    );
+
+    if (reply === "") throw new Error("No server details received");
+
+    const schema = {
+      name: ["ServerName", String],
+      password: ["ServerPassword", String],
+      map: ["ServerMap", String],
+      maxPlayers: ["ServerMaxPlayers", Number],
+      currentPlayers: ["ServerCurrentPlayers", Number],
+      mutationsEnabled: ["bEnableMutations", Boolean],
+      humansEnabled: ["bEnableHumans", Boolean],
+      passwordEnabled: ["bServerPassword", Boolean],
+      queueEnabled: ["bQueueEnabled", Boolean],
+      whitelistEnabled: ["bServerWhitelist", Boolean],
+      aiSpawnEnabled: ["bSpawnAI", Boolean],
+      recordingReplayAllowed: ["bAllowRecordingReplay", Boolean],
+      regionSpawningEnabled: ["bUseRegionSpawning", Boolean],
+      regionSpawnCooldownEnabled: ["bUseRegionSpawnCooldown", Boolean],
+      regionSpawnCooldownSeconds: ["RegionSpawnCooldownTimeSeconds", Number],
+      dayLengthMinutes: ["ServerDayLengthMinutes", Number],
+      nightLengthMinutes: ["ServerNightLengthMinutes", Number],
+      globalChatEnabled: ["bEnableGlobalChat", Boolean],
+    } as const;
+
+    const fields = Object.entries(schema);
+
+    const groups = new RegExp(
+      fields.map(([property, [key, type]], index) => {
+        const next = fields[index + 1];
+        const pattern = type === Number
+          ? "\\d+"
+          : type === Boolean
+          ? "true|false"
+          : next === undefined
+          ? ".*"
+          : `.*?(?=, ${next[1][0]}: )`;
+        return `${key}: (?<${property}>${pattern})`;
+      }).join(", .*?"),
+    ).exec(reply)?.groups;
+
+    if (groups === undefined) {
+      throw new Error("Received malformed server details");
+    }
+
+    return Object.fromEntries(
+      fields.map(([property, [, type]]) => [
+        property,
+        type === Boolean ? groups[property] === "true" : type(groups[property]),
+      ]),
+    ) as { [P in keyof typeof schema]: ReturnType<(typeof schema)[P][1]> };
   }
 
   /**
