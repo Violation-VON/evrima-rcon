@@ -60,8 +60,8 @@ The commands were tested against a v0.21.784 server.
 | Ban                               | [`ban(name: string, steamId: string, reason: string, duration?: number): boolean`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#ban) |   ✅    |
 | List Players                      | [`listPlayers(): Player[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayers)                                                |   ✅    |
 | List Player Data                  | [`listPlayerData(): Character[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayerdata)                                       |   ✅    |
+| Server Details                    | [`getServerDetails(): ServerDetails`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getserverdetails)                                 |   ✅    |
 | Direct Message                    | (broken in-game)                                                                                                                                            |   ❌    |
-| Server Details                    |                                                                                                                                                             | Planned |
 | Get Playables                     |                                                                                                                                                             | Planned |
 | Update Playables                  |                                                                                                                                                             | Planned |
 | Add Playable                      |                                                                                                                                                             | Planned |
