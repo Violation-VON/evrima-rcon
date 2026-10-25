@@ -264,7 +264,7 @@ export class EvrimaRCON {
    * Kicks a player.
    *
    * @param steamId SteamID64 of the player.
-   * @param reason Reason; must not contain `,`.
+   * @param reason Reason.
    * @returns whether the player was online and got kicked.
    * @throws {@link !Error} if not connected.
    */
@@ -274,7 +274,7 @@ export class EvrimaRCON {
       EvrimaRCON.withTimestamp(
         "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH + " was kicked".length,
       ),
-      [steamId, reason].join(","),
+      [steamId, reason.replaceAll(",", "‚")].join(","),
     ) !== "";
   }
 
@@ -283,7 +283,7 @@ export class EvrimaRCON {
    *
    * @param name Name of the player.
    * @param steamId SteamID64 of the player.
-   * @param reason Reason; must not contain `,`.
+   * @param reason Reason.
    * @param duration Duration in seconds; `0`, `null` and `Infinity` ban permanently.
    * @returns whether the player was online and got kicked; the ban applies either way.
    * @throws {@link !RangeError} if the duration is not a non-negative integer, `Infinity` or `null`.
@@ -311,7 +311,7 @@ export class EvrimaRCON {
         "Player ".length + EvrimaRCON.PLAYER_ID_LENGTH +
           " was kicked and banned".length,
       ),
-      [name, steamId, reason, seconds].join(","),
+      [name, steamId, reason.replaceAll(",", "‚"), seconds].join(","),
     ) !== "";
   }
 
