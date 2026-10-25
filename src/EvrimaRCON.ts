@@ -320,6 +320,7 @@ export class EvrimaRCON {
    *
    * @returns List of connected players.
    * @throws {@link !Error} if not connected.
+   * @see {@link listLivePlayers}
    */
   public async listPlayers(): Promise<Player[]> {
     const commas = (line: string): number => line.split(",").length - 1;
@@ -345,10 +346,16 @@ export class EvrimaRCON {
   }
 
   /**
-   * Lists character data of all online players.
+   * Lists all live players that have a character.
+   *
+   * When a player dies, until they respawn or the corpse is completely removed
+   * (wiped, swallowed, bones eaten, etc.), the server continues to return live
+   * information of the corpse, including its live {@link Character.location}.
+   * Corpses always have {@link Character.health} set to `0`.
    *
    * @returns Character data of each online player.
    * @throws {@link !Error} if not connected.
+   * @see {@link listPlayers}
    */
   public async listLivePlayers(): Promise<Character[]> {
     const reply = await this.send(
