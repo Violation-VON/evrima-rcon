@@ -17,6 +17,7 @@
 import type { Coordinates } from "./Coordinates.ts";
 import { Gender } from "./Gender.ts";
 import type { Player } from "./Player.ts";
+import type { Species } from "./Species.ts";
 
 /**
  * Player character state.
@@ -35,7 +36,7 @@ export interface Character extends Player {
   /**
    * Species.
    */
-  speciesClass: string;
+  speciesClass: Species;
 
   /**
    * Growth percentage from 0 to 1.

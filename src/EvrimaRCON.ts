@@ -22,7 +22,7 @@ import type { Coordinates } from "./Coordinates.ts";
 import { Gender } from "./Gender.ts";
 import type { Player } from "./Player.ts";
 import type { ServerDetails } from "./ServerDetails.ts";
-import type { Species } from "./Species.ts";
+import { Species } from "./Species.ts";
 
 type MessageEnd = (reply: string) => number;
 
@@ -522,7 +522,7 @@ export class EvrimaRCON {
           name: fields.Name!,
           gender,
           location: { x: x!, y: y!, z: z! } satisfies Coordinates,
-          speciesClass: fields.Class!,
+          speciesClass: fields.Class as Species,
           growth: Number(fields.Growth),
           health: Number(fields.Health),
           stamina: Number(fields.Stamina),
