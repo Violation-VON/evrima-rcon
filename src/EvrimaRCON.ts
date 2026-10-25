@@ -315,9 +315,10 @@ export class EvrimaRCON {
   }
 
   /**
-   * Lists online players.
+   * Lists all players connected to the server, including players in
+   * the character selection menu.
    *
-   * @returns Online players.
+   * @returns List of connected players.
    * @throws {@link !Error} if not connected.
    */
   public async listPlayers(): Promise<Player[]> {
