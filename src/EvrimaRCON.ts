@@ -448,9 +448,7 @@ export class EvrimaRCON {
    * @throws {@link !Error} if not connected.
    */
   public async setGlobalChatEnabled(enabled: boolean): Promise<void> {
-    const { globalChatEnabled } = await this.getServerDetails();
-
-    if (globalChatEnabled === enabled) return;
+    if ((await this.getServerDetails()).globalChatEnabled === enabled) return;
 
     while (await this.toggleGlobalChat() !== enabled);
   }
