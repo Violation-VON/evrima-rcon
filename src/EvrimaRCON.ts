@@ -522,7 +522,7 @@ export class EvrimaRCON {
           name: fields.Name!,
           gender,
           location: { x: x!, y: y!, z: z! } satisfies Coordinates,
-          speciesClass: fields.Class as Species,
+          species: fields.Class as Species,
           growth: Number(fields.Growth),
           health: Number(fields.Health),
           stamina: Number(fields.Stamina),

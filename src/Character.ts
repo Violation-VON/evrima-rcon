@@ -36,7 +36,7 @@ export interface Character extends Player {
   /**
    * Species.
    */
-  speciesClass: Species;
+  species: Species;
 
   /**
    * Growth percentage from 0 to 1.
