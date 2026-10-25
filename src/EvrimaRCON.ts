@@ -350,7 +350,7 @@ export class EvrimaRCON {
    * @returns Character data of each online player.
    * @throws {@link !Error} if not connected.
    */
-  public async listPlayerData(): Promise<Character[]> {
+  public async listLivePlayers(): Promise<Character[]> {
     const reply = await this.send(
       Opcode.GET_PLAYER_DATA,
       (text) =>
