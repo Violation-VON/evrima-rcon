@@ -441,6 +441,20 @@ export class EvrimaRCON {
     return reply.endsWith(on);
   }
 
+  /**
+   * Sets whether global chat is enabled.
+   *
+   * @param enabled Whether to enable to disable global chat.
+   * @throws {@link !Error} if not connected.
+   */
+  public async setGlobalChatEnabled(enabled: boolean): Promise<void> {
+    const { globalChatEnabled } = await this.getServerDetails();
+
+    if (globalChatEnabled === enabled) return;
+
+    while (await this.toggleGlobalChat() !== enabled);
+  }
+
   private send(opcode: Opcode, end: MessageEnd, args = ""): Promise<string> {
     const run = this.queue.then(async () => {
       if (!this.connected) throw new Error("Not connected");
