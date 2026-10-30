@@ -61,11 +61,10 @@ The commands were tested against a v0.21.784 server.
 | List Players                      | [`listPlayers(): Player[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayers)                                                |   ✅    |
 | List Player Data                  | [`listPlayerData(): Character[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayerdata)                                       |   ✅    |
 | Server Details                    | [`getServerDetails(): ServerDetails`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getserverdetails)                                 |   ✅    |
-| Direct Message                    | (broken in-game)                                                                                                                                            |   ❌    |
-| Get Playables                     |                                                                                                                                                             | Planned |
-| Update Playables                  |                                                                                                                                                             | Planned |
-| Add Playable                      |                                                                                                                                                             | Planned |
-| Remove Playable                   |                                                                                                                                                             | Planned |
+| Get Playables                     | [`getPlayables(): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getplayables)                                          |   ✅    |
+| Update Playables                  | [`setPlayables(species: ReadonlySet<Species>): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#setplayables)             |   ✅    |
+| Add Playables                     | [`addPlayables(species: ReadonlySet<Species>): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#addplayables)             |   ✅    |
+| Remove Playables                  | [`removePlayables(species: ReadonlySet<Species>): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#removeplayables)       |   ✅    |
 | Toggle Migrations                 |                                                                                                                                                             | Planned |
 | Toggle Growth Multiplier          |                                                                                                                                                             | Planned |
 | Set Growth Multiplier             |                                                                                                                                                             | Planned |
@@ -83,6 +82,7 @@ The commands were tested against a v0.21.784 server.
 | Get Queue Status                  |                                                                                                                                                             | Planned |
 | Toggle AI Learning                |                                                                                                                                                             | Planned |
 | Command                           |                                                                                                                                                             | Unknown |
+| Direct Message                    | (broken in-game)                                                                                                                                            |   ❌    |
 
 ## Licence
 
