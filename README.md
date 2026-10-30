@@ -59,7 +59,7 @@ The commands were tested against a v0.21.784 server.
 | Kick                              | [`kick(steamId: string, reason: string): boolean`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#kick)                                |   ✅    |
 | Ban                               | [`ban(name: string, steamId: string, reason: string, duration?: number): boolean`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#ban) |   ✅    |
 | List Players                      | [`listPlayers(): Player[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayers)                                                |   ✅    |
-| List Player Data                  | [`listPlayerData(): Character[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listplayerdata)                                       |   ✅    |
+| List Player Data                  | [`listLivePlayers(): Character[]`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#listliveplayers)                                     |   ✅    |
 | Server Details                    | [`getServerDetails(): ServerDetails`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getserverdetails)                                 |   ✅    |
 | Get Playables                     | [`getPlayables(): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#getplayables)                                          |   ✅    |
 | Update Playables                  | [`setPlayables(species: ReadonlySet<Species>): Set<Species>`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#setplayables)             |   ✅    |
