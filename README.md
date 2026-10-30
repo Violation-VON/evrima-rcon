@@ -74,7 +74,7 @@ The commands were tested against a v0.21.784 server.
 | Toggle Whitellist                 |                                                                                                                                                             | Planned |
 | Add to Whitellist                 |                                                                                                                                                             | Planned |
 | Remove from Whitellist            |                                                                                                                                                             | Planned |
-| Toggle Global Chat                |                                                                                                                                                             | Planned |
+| Toggle Global Chat                | [`toggleGlobalChat(): boolean`](https://violation-von.github.io/evrima-rcon/classes/EvrimaRCON.html#toggleGlobalChat)                                       |   ✅    |
 | Toggle Humans                     |                                                                                                                                                             | Planned |
 | Toggle AI                         |                                                                                                                                                             | Planned |
 | Disable AI Species                |                                                                                                                                                             | Planned |

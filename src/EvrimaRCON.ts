@@ -43,6 +43,7 @@ const enum Opcode {
   KICK = 0x30,
   LIST_PLAYERS = 0x40,
   GET_PLAYER_DATA = 0x77,
+  TOGGLE_GLOBAL_CHAT = 0x84,
 }
 
 /**
@@ -550,6 +551,44 @@ export class EvrimaRCON {
         } satisfies Character;
       },
     );
+  }
+
+  /**
+   * Toggles global chat.
+   *
+   * @returns Whether global chat was enabled or disabled.
+   * @throws {@link !Error} if not connected.
+   */
+  public async toggleGlobalChat(): Promise<boolean> {
+    const prefix = "Global chat is now ";
+
+    const on = "Off"; // [sic]
+    const off = "On"; // [sic]
+
+    const reply = await this.send(
+      Opcode.TOGGLE_GLOBAL_CHAT,
+      (text) =>
+        text.startsWith(prefix, EvrimaRCON.TIMESTAMP.length) &&
+          [on, off].some((e) =>
+            e === text.slice(EvrimaRCON.TIMESTAMP.length + prefix.length)
+          )
+          ? text.length
+          : EvrimaRCON.INCOMPLETE,
+    );
+
+    return reply.endsWith(on);
+  }
+
+  /**
+   * Sets whether global chat is enabled.
+   *
+   * @param enabled Whether to enable to disable global chat.
+   * @throws {@link !Error} if not connected.
+   */
+  public async setGlobalChatEnabled(enabled: boolean): Promise<void> {
+    if ((await this.getServerDetails()).globalChatEnabled === enabled) return;
+
+    while (await this.toggleGlobalChat() !== enabled);
   }
 
   private send(
