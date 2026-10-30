@@ -21,3 +21,4 @@ export { EvrimaRCON } from "./EvrimaRCON.ts";
 export { Gender } from "./Gender.ts";
 export type { Player } from "./Player.ts";
 export type { ServerDetails } from "./ServerDetails.ts";
+export { Species } from "./Species.ts";

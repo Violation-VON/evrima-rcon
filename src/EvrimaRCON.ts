@@ -22,6 +22,7 @@ import type { Coordinates } from "./Coordinates.ts";
 import { Gender } from "./Gender.ts";
 import type { Player } from "./Player.ts";
 import type { ServerDetails } from "./ServerDetails.ts";
+import { Species } from "./Species.ts";
 
 type MessageEnd = (reply: string) => number;
 
@@ -34,6 +35,10 @@ const enum Opcode {
   ANNOUNCE = 0x10,
   GET_SERVER_DETAILS = 0x12,
   WIPE_CORPSES = 0x13,
+  GET_PLAYABLES = 0x14,
+  UPDATE_PLAYABLES = 0x15,
+  ADD_PLAYABLE = 0x1a,
+  REMOVE_PLAYABLE = 0x1b,
   BAN = 0x20,
   KICK = 0x30,
   LIST_PLAYERS = 0x40,
@@ -246,6 +251,131 @@ export class EvrimaRCON {
   }
 
   /**
+   * Gets the playable species.
+   *
+   * @returns Playable species.
+   * @throws {@link !Error} if not connected.
+   */
+  public async getPlayables(): Promise<Set<Species>> {
+    const reply = await this.send(
+      Opcode.GET_PLAYABLES,
+      (text) =>
+        /(?:,|Playables\n)$/.test(text) ? text.length : EvrimaRCON.INCOMPLETE,
+    );
+
+    if (reply === "") throw new Error("No playables received");
+
+    const [, names] = reply.split("\n");
+    return new Set(names!.split(",").slice(0, -1) as Species[]);
+  }
+
+  /**
+   * Sets the playable species.
+   *
+   * @param species Species set to set as playable.
+   * @returns Playable species after updating.
+   * @throws {@link !Error} if not connected.
+   */
+  public async setPlayables(
+    species: ReadonlySet<Species>,
+  ): Promise<Set<Species>> {
+    const prefix = "Playables updated: ";
+
+    const reply = await this.send(
+      Opcode.UPDATE_PLAYABLES,
+      undefined,
+      [...species].join(","),
+    );
+
+    if (!reply.startsWith(prefix, EvrimaRCON.TIMESTAMP.length)) {
+      throw new Error("Malformed playables update response");
+    }
+
+    return new Set(
+      reply.slice(EvrimaRCON.TIMESTAMP.length + prefix.length)
+        .split(",").filter(Boolean) as Species[],
+    );
+  }
+
+  /**
+   * Adds a playable species.
+   *
+   * @param species Species to add.
+   * @returns Playable species after adding.
+   * @throws {@link !Error} if not connected.
+   */
+  public async addPlayable(species: Species): Promise<Set<Species>> {
+    return await this.addPlayables(new Set([species]));
+  }
+
+  /**
+   * Adds playable species.
+   *
+   * @param species Species to add.
+   * @returns Playable species after adding.
+   * @throws {@link !Error} if not connected.
+   */
+  public async addPlayables(
+    species: ReadonlySet<Species>,
+  ): Promise<Set<Species>> {
+    const prefix = "Playable(s) added. Now: ";
+
+    const reply = await this.send(
+      Opcode.ADD_PLAYABLE,
+      undefined,
+      [...species].join(","),
+    );
+
+    if (!reply.startsWith(prefix, EvrimaRCON.TIMESTAMP.length)) {
+      throw new Error("Malformed playables addition response");
+    }
+
+    return new Set(
+      reply.slice(EvrimaRCON.TIMESTAMP.length + prefix.length)
+        .split(",").filter(Boolean) as Species[],
+    );
+  }
+
+  /**
+   * Removes a playable species.
+   *
+   * @param species Species to remove.
+   * @returns Playable species after removing.
+   * @throws {@link !Error} if not connected.
+   */
+  public async removePlayable(species: Species): Promise<Set<Species>> {
+    return await this.removePlayables(new Set([species]));
+  }
+
+  /**
+   * Removes playable species.
+   *
+   * @param species Species to remove.
+   * @returns Playable species after removing.
+   * @throws {@link !Error} if not connected.
+   */
+  public async removePlayables(
+    species: ReadonlySet<Species>,
+  ): Promise<Set<Species>> {
+    const prefix = "Playable(s) removed. Now: ";
+
+    const reply = await this.send(
+      Opcode.REMOVE_PLAYABLE,
+      undefined,
+      [...species].join(","),
+    );
+
+    if (!reply.startsWith(prefix, EvrimaRCON.TIMESTAMP.length)) {
+      throw new Error("Malformed playables removal response");
+    }
+
+    return new Set(
+      reply.slice(EvrimaRCON.TIMESTAMP.length + prefix.length)
+        .split(",").filter(Boolean) as Species[],
+    );
+  }
+
+  /**
    * Wipes all corpses.
    *
    * @throws {@link !Error} if not connected.
@@ -400,7 +530,7 @@ export class EvrimaRCON {
           name: fields.Name!,
           gender,
           location: { x: x!, y: y!, z: z! } satisfies Coordinates,
-          speciesClass: fields.Class!,
+          species: fields.Class as Species,
           growth: Number(fields.Growth),
           health: Number(fields.Health),
           stamina: Number(fields.Stamina),
@@ -422,7 +552,11 @@ export class EvrimaRCON {
     );
   }
 
-  private send(opcode: Opcode, end: MessageEnd, args = ""): Promise<string> {
+  private send(
+    opcode: Opcode,
+    end: MessageEnd | undefined,
+    args = "",
+  ): Promise<string> {
     const run = this.queue.then(async () => {
       if (!this.connected) throw new Error("Not connected");
       return await this.exchange(
@@ -436,7 +570,10 @@ export class EvrimaRCON {
     return run;
   }
 
-  private async exchange(frame: Uint8Array, end: MessageEnd): Promise<string> {
+  private async exchange(
+    frame: Uint8Array,
+    end: MessageEnd | undefined,
+  ): Promise<string> {
     const signal = AbortSignal.timeout(this.options.timeout);
     const chunks = on(this.socket, "data", { signal, close: ["close"] });
     const decoder = new TextDecoder();
@@ -447,6 +584,8 @@ export class EvrimaRCON {
     try {
       for await (const [chunk] of chunks) {
         reply += decoder.decode(chunk, { stream: true });
+        if (end === undefined) return reply;
+
         const index = end(reply);
         if (index !== EvrimaRCON.INCOMPLETE) return reply.slice(0, index);
       }
